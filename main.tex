@@ -1,0 +1,576 @@
+\documentclass[11pt, a4paper, final]{report}
+
+\usepackage[margin=1in, bottom=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage{url}
+\urlstyle{same}
+\usepackage{titling}
+\usepackage{lipsum}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\usepackage{array}
+
+% boild math
+\usepackage{bm}
+
+\newcommand\onlyb[1]{\normalfont{\textbf{#1}}}
+\newcommand\noSty[1]{\normalfont{#1}}
+\newtheorem{theorem}{Teorema}[section]
+\newtheorem{lemma}[theorem]{Lema}
+\newtheorem{definition}[theorem]{Definisi}
+\newtheorem{proposition}[theorem]{Proposisi}
+
+% Bibliography stuffs i believe
+\usepackage[bahasa]{babel}
+\usepackage[fixlanguage]{babelbib}
+
+% Bold extra
+\usepackage{bold-extra}
+
+% Image floating
+\usepackage{float}
+
+% Image subfigure
+\usepackage{caption}
+\usepackage{subcaption}
+
+% Code highlight
+\usepackage[newfloat]{minted}
+\usepackage{xcolor} % to access the named colour LightGray
+\definecolor{LightGray}{gray}{0.9}
+
+% Pseudocode
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\renewcommand*{\algorithmcfname}{Algoritma}
+\SetKwInput{KwData}{Masukan}
+\SetKwInput{KwResult}{Keluaran}
+
+% Change Counter
+\usepackage{chngcntr}
+\counterwithout{equation}{chapter} % remove the chapter number
+
+% Separator length in itemize
+\usepackage{enumitem}
+
+\usepackage{multirow}
+
+\setlength{\parskip}{1.5em} 
+
+\begin{document}
+\begin{titlepage}
+    \begin{center}\begin{figure}
+            \begin{center}
+                \includegraphics[width=2.5cm]{makara.eps}
+            \end{center}
+        \end{figure}    
+        \vspace*{0cm}
+        \textbf{
+        	UNIVERSITAS INDONESIA\\
+        }
+        
+        \vspace*{1.0cm}
+        % judul thesis harus dalam 14pt Times New Roman
+        \textbf{Perbandingan Metode Dark Channel Prior dengan Metode Modified PDR-Net untuk Single Image Dehazing} \\[1.0cm]
+        
+        \vspace*{3 cm}
+        \textbf{Pengcitraan} \\
+        \vspace*{3 mm}
+        % penulis dan npm
+
+
+\begin{table}[H]
+        \centering
+        \begin{tabular}{c c}
+            Muhammad Hanif Fahreza & 1906351026\\
+            Andre Septiano & 1906398313\\
+            Muhammad Irfan Junaidi & 1906293202\\
+            Muhammad Kenta Bisma Dewa Brata & 1906350950
+        \end{tabular}
+        \end{table}
+        \vspace*{5.0cm}
+
+        % informasi mengenai fakultas dan program studi
+        \textbf{
+        	FAKULTAS ILMU KOMPUTER\\
+        	DEPOK
+        }
+    \end{center}
+\end{titlepage}
+
+\onehalfspacing
+
+\tableofcontents
+\addcontentsline{toc}{chapter}{Daftar Isi}  
+
+\begingroup
+\listoffigures
+\addcontentsline{toc}{chapter}{Daftar Gambar}  
+\let\cleardoublepage\relax
+\let\clearpage\relax
+\listoftables
+\addcontentsline{toc}{chapter}{Daftar Tabel}  
+\endgroup
+
+\chapter{Pendahuluan}
+\section{Latar Belakang}
+Gambar-gambar yang diambil di luar ruangan biasanya akan mengalami penurunan kualitas yang diakibatkan oleh partikel-partikel yang bertebaran di atmosfer seperti kabut dan asap. Kabut dan asap atau biasa disebut dengan haze dapat mengubah warna dan kontras dari sebuah citra yang akan dapat mengurangi keterlihatan objek-objek yang ada pada suatu citra sehingga kualitas dari citra tersebut akan rusak.
+
+Haze biasanya terjadi ketika ada penyerapan dan penyebaran partikel debu dan asap pada udara yang cenderung kering sehingga debu, asap, dan polutan lain menjadi berkumpul membentuk haze yang mengganggu pandangan kita pada citra. Maka dari itu, kita membutuhkan suatu cara untuk menghilangkan haze dari suatu citra. 
+
+Banyak metode yang sudah dibuat untuk menyelesaikan masalah ini. Mulai dari yang menggunakan teknik pengolahan citra yang relatif mudah dan simpel hingga menggunakan metode deep learning yang relatif kompleks. Pada laporan ini, kami memilih untuk melakukan percobaan dan analisis pada dua metode, yaitu: Dark Channel Prior for Single Image Haze Removal (DCP) yang diusulkan oleh He et al. (2010) dan Modified PDR-Net (MPDR-Net) yang diusulkan oleh Hartanto dan Rahadianti (2021).
+
+\section{Definisi Masalah}
+
+Berdasarkan latar belakang yang telah dipaparkan, rumusan permasalahan dalam penelitian ini adalah:
+
+\begin{itemize}
+    \item Apakah metode DCP dapat melakukan \textit{single image dehazing} pada citra yang \textit{hazy}?
+    \item Seberapa baik metode DCP dalam melakukan \textit{single image dehazing} pada citra yang \textit{hazy}?
+    \item Apakah MPDR-Net dapat melakukan \textit{single image dehazing} pada citra yang \textit{hazy}?
+    \item Seberapa baik MPDR-Net dalam melakukan \textit{single image dehazing} pada citra yang \textit{hazy}?
+\end{itemize}
+
+\section{Tujuan Penelitian}
+
+Penelitian ini dilakukan dengan harapan dapat menjawab pertanyaan penelitian di atas. Hasil dari penelitian ini diharapkan dapat:
+
+\begin{itemize}
+    \item Mengetahui seberapa baik metode DCP dalam melakukan \textit{single image dehazing} pada citra yang \textit{hazy}.
+    \item Mengetahui seberapa baik MPDR-Net dalam melakukan \textit{single image dehazing} pada citra yang \textit{hazy}.
+\end{itemize}
+
+\chapter{Isi}
+
+\section{Kajian Literatur}
+
+\subsection{Metode Konvensional: \textit{Dark Channel Prior}}
+
+Metode \textit{Dark Channel Prior} (akan kami sebut sebagai DCP pada laporan ini) adalah metode \textit{haze removal} yang diusulkan oleh He et al. (2010). Sesuai namanya, metode ini mengandalkan sebuah asumsi atau i mengenai citra luar ruangan. 
+
+Berdasarkan observasi pada data statistik mengenai citra luar ruangan, kebanyakan bagian pada citra yang tidak menampilkan langit biasanya memiliki piksel-piksel dengan intensitas yang relatif sangat rendah pada setidaknya satu warna dari tiga warna pada kanal RGB. Piksel-piksel tersebut disebut sebagai “\textit{dark pixels}” atau “piksel gelap”. Pada citra yang memiliki \textit{haze}, biasanya piksel-piksel gelap ini mempunyai intensitas yang relatif lebih tinggi dikarenakan adanya \textit{airlight} yang disebabkan oleh \textit{haze}. Kita dapat menggunakan piksel gelap tersebut untuk mengestimasi transmisi atau besar cahaya yang masuk ke dalam medium pengambilan citra.
+
+Kami melakukan sebuah eksperimen untuk melihat apakah asumsi ini memang benar. Pada eksperimen ini, kami membuat histogram intensitas \textit{dark channel} piksel-piksel yang ada di 45 pasang gambar yang ada di dataset O-HAZE. Berikut adalah hasilnya:
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{assets/hist_hazefree.png}
+\caption{Histogram intensitas \textit{dark channel} piksel-piksel gambar \textit{haze-free}}
+\end{figure}
+
+\newpage
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{assets/hist_hazy.png}
+\caption{Histogram intensitas \textit{dark channel} piksel-piksel gambar \textit{hazy}}
+\end{figure}
+
+\newpage
+Dapat dilihat pada grafik pertama bahwa intensitas piksel gambar-gambar bebas \textit{haze} dari dataset memang kebanyakan bernilai 0. Intensitasnya cenderung rendah dengan intensitas maksimal sekitar 16-17. Lalu dapat dilihat juga pada grafik kedua bahwa intensitas gambar-gambar \textit{haze} juga cenderung rendah, tetapi meningkat dari sebelumnya dengan intensitas maksimal sekitar 25. Selain itu, intensitas kebanyakan piksel di gambar-gambar \textit{haze} juga tidak lagi bernilai 0, melainkan sekitar 1-3. Hal ini menunjukkan bahwa asumsi DCP benar untuk dataset ini.
+
+Pada bidang \textit{computer vision} dan \textit{computer graphics}, model yang sering dipakai untuk menggambarkan haze pada sebuah citra adalah:
+
+\begin{equation} \label{eq1}
+\mathbf{I}(x) = \mathbf{J}(x)t(x) + \mathbf{A}(1-t(x))
+\end{equation}
+
+di mana $\mathbf{I}(x)$ adalah intensitas, $\mathbf{J}$ adalah radiance citra bebas \textit{haze}, $\mathbf{A}$ adalah cahaya atmosfer global, dan $t$ adalah transmisi medium, yaitu jumlah cahaya yang sampai ke medium pengambilan citra. Bagian $\mathbf{J}(x)t(x)$ dari persamaan disebut sebagai \textit{direct attenuation} yang menyatakan seberapa banyak \textit{radiance} dari citra yang berhasil mencapai medium pengambilan gambar. Bagian $\mathbf{A}(1-t(x))$ adalah \textit{airlight} yang disebabkan oleh keberadaan \textit{haze} pada citra. Dengan menggunakan DCP, kita akan mengestimasi $\mathbf{J}$, $\mathbf{A}$, dan $t$ yang sebelumnya tidak diketahui dari $\mathbf{I}$.
+
+Fungsi transmisi $t(x)$ ketika atmosfer dianggap seragam adalah:
+
+\begin{equation} \label{eq2}
+t(x)=e^{-\beta d(x)}
+\end{equation}
+
+di mana $\beta$ adalah koefisien hamburan udara pada atmosfer dan $d(x)$ adalah kedalaman suatu bagian dari citra. Dari persamaan tersebut, kita dapat melihat bahwa semakin dalam posisi objek yang ditampilkan oleh suatu citra, maka transmisi dari citra tersebut akan berkurang secara eksponensial.
+
+\newpage
+Kedua persamaan diatas digambarkan dengan gambar di bawah.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{assets/model.png}
+\caption{Ilustrasi persamaan (1) dan (2)}
+\end{figure}
+
+\textit{Dark channel} dari suatu citra dapat dijabarkan secara formal dengan:
+
+\begin{equation} \label{eq3}
+J^{dark}(x) = \min_{c\in{\{r,g,b\}}}{(\min_{y\in{\Omega(x)}}{J^c(y)})}
+\end{equation}
+
+dengan $J^{dark}$ adalah dark channel, $J^{c}$ adalah kanal warna dari $J$, dan $\Omega(x)$ adalah subcitra dengan titik tengah $x$. Berdasarkan asumsi DCP, intensitas dari $J^{dark}$ pada bagian dari citra yang tidak menampilkan langit sangat rendah sampai-sampai cenderung bernilai 0. rendahnya intensitas \textit{dark channel} ini dapat disebabkan oleh bayangan, benda-benda yang memang berwarna gelap, dan benda-benda yang mempunyai suatu warna yang dominan sehingga pasti ada salah satu kanal warna yang rendah pada citra benda tersebut. 
+Dengan asumsi bahwa transmisi citra $\tilde{t}(x)$ pada suatu subcitra $\Omega(x)$ adalah konstan, kita dapat melakukan operasi min() pada persamaan \ref{eq1} untuk subcitra $\Omega(x)$ menjadi:
+
+\begin{equation} \label{eq4}
+\min_{y\in{\Omega(x)}}{(I^c(y))}=\tilde{t}(x)\min_{y\in{\Omega(x)}}{(J^c(y))}+(1-\tilde{t}(x))A^c
+\end{equation}
+
+Operasi min tersebut kita lakukan untuk ketiga kanal RGB. Selanjutnya, kita lakukan operasi min() lagi untuk tiga hasil yang sudah kita dapatkan dari tiga operasi min() pada ketiga kanal RGB sebelumnya. Hasil persamaan yang didapat adalah:
+
+\begin{equation} \label{eq5}
+\min_c{(\min_{y\in{\Omega(x)}}{(\dfrac{I^c(y)}{A^c})})}=\tilde{t}(x)\min_c{(\min_{y\in{\Omega(x)}}{(\dfrac{J^c(y)}{A^c})})}+(1-\tilde{t}(x))
+\end{equation}
+
+Dengan menggunakan asumsi DCP, maka kita mengetahui bahwa \textit{dark channel} atau $J^{dark}$ dari \textit{radiance} suatu citra bebas \textit{haze} cenderung bernilai 0, sehingga kita dapat mengasumsikan:
+
+\begin{equation} \label{eq6}
+J^{dark}(x)=\min_c{(\min_{y\in{\Omega(x)}}{(J^c(y))})}=0
+\end{equation}
+
+Karena $A^c$ selalu bernilai positif, maka kita dapat mengubah persamaan (6) menjadi:
+
+\begin{equation} \label{eq7}
+\min_c{(\min_{y\in{\Omega(x)}}{(\dfrac{J^c(y)}{A^c})})}=0
+\end{equation}
+
+Dengan menerapkan hasil yang kita dapatkan pada persamaan (7) pada persamaan (5), kita dapat melakukan estimasi nilai $\tilde{t}(x)$, yaitu:
+
+\begin{equation} \label{eq8}
+\tilde{t}(x)=1-\min_c{(\min_{y\in{\Omega(x)}}{(\dfrac{I^c(y)}{A^c})})}
+\end{equation}
+
+Kita dapat melihat bahwa bagian kanan persamaan tersebut adalah \textit{dark channel} dari citra \textit{haze} yang dinormalisasi oleh $A^c$.
+
+Sebelumnya telah dinyatakan bahwa asumsi DCP hanya berlaku untuk bagian dari citra yang tidak menampilkan langit. Namun, karena warna dari langit biasanya sangat mirip dengan cahaya atmosfir A pada suatu citra \textit{haze}, maka kita bisa menganggap bahwa:
+
+\begin{equation} \label{eq9}
+\min_c{(\min_{y\in{\Omega(x)}}{(\dfrac{I^c(y)}{A^c})})} \rightarrow 1 \text{, and }\tilde{t}(x) \rightarrow 0
+\end{equation}
+
+Karena itu persamaan (8) juga berlaku untuk bagian langit dari citra sehingga kita tidak perlu melakukan pemisahan bagian langit dan bagian lain dari citra.
+
+Walaupun \textit{haze} dianggap merusak citra, kita tetap membutuhkan sedikit \textit{haze} pada citra karena \textit{haze} merupakan hal yang penting bagi manusia untuk dapat melihat kedalaman dari suatu pemandangan atau citra. Oleh karena itu konstan $\omega$ diperkenalkan pada persamaan (8) untuk menyimpan sedikit \textit{haze} dari citra. Maka, persamaan tersebut menjadi:
+
+\begin{equation} \label{eq10}
+\tilde{t}(x)=1-\omega\min_c{(\min_{y\in{\Omega(x)}}{(\dfrac{I^c(y)}{A^c})})}.
+\end{equation}
+
+He menetapkan $\omega$ = 0.95.
+
+Hasil estimasi t(x) yang didapatkan dari persamaan (10) masih terlihat kasar sehingga perlu diperhalus. He menggunakan algoritma \textit{soft matting} yang diusulkan oleh Levin et al. (2008) untuk memperhalus estimasi transmisi yang didapatkan. Namun, algoritma itu cukup sulit dan rumit untuk diimplementasikan. Karena itu He et al. (2013) mengusulkan suatu metode baru untuk menggantikan algoritma tersebut, yaitu metode \textit{Guided Filter} (GF). Maka pada laporan ini kami akan menggunakan GF  untuk memperhalus transmisi yang didapat.
+
+GF mengasumsikan bahwa ada suatu model lokal linear antara citra penunjuk masukan I dengan keluaran citra yang sudah difilter q. Secara formal, model tersebut didefinisikan sebagai:
+
+\begin{equation} \label{eq11}
+q_i=a_kI_i+b_k,\forall{i}\in{\omega_k},
+\end{equation}
+
+dengan $q_i$ adalah piksel i dari citra keluaran, $\omega_k$ adalah \textit{window} kotak dengan radius r yang berpusat di piksel k, at  j, $I_i$ adalah piksel i dari citra penunjuk masukan, serta $a_k$ dan $b_k$ yang merupakan konstanta yang diasumsikan ada pada $\omega_k$.
+
+Untuk menentukan nilai dari konstanta $a_k$ dan $b_k$, kita membutuhkan pembatas dari citra masukan yang ingin difilter p. Maka, kita akan memodelkan terlebih dahulu hubungan antara p dengan q dengan:
+
+\begin{equation} \label{eq12}
+q_i = p_i - n_i
+\end{equation}
+
+dengan $n_i$ adalah n adalah \textit{noise} yang ingin kita filter.
+
+Kita ingin meminimalisir perbedaan nilai p dan q pada suatu piksel i dengan tetap mempertahankan mode linear di atas. Maka, kita dapat melakukannya dengan meminimalisir \textit{cost function} berikut:
+
+
+
+\begin{equation} \label{eq13}
+E(a_k,b_k)=\sum_{i\in{\omega_k}}{((a_kI_i+b_k-p_i)^2+\epsilon{a_k^2})}
+\end{equation}
+
+dengan $E(a_k, b_k)$ adalah \textit{cost function} pada \textit{window} $\omega_k$ dan $\epsilon$ adalah parameter regularisasi.
+
+Kita dapat meminimalisir \textit{cost function} di atas dengan menemukan nilai $a_k$ dan $b_k$ yang tepat. Kita dapat menemukan nilai-nilai tersebut dengan persamaan:
+
+\begin{equation} \label{eq14}
+a_k=\dfrac{\dfrac{1}{|\omega|}\sum_{i\in{\omega_k}}{I_ip_i-\mu_k\bar{p}_k}}{\sigma_k^2+\epsilon}
+\end{equation}
+
+\begin{equation} \label{eq15}
+b_k=\bar{p}_k-a_k\mu_k
+\end{equation}
+
+dengan $\mu_k$ and $\sigma_k^2$ adalah rata-rata dan variansi dari I pada \textit{window} $\omega_k$,  $|\omega|$ adalah jumlah piksel pada \textit{window} $\omega_k$, dan$\bar{p}_k$ adalah rata-rata dari piksel-piksel p pada \textit{window} $\omega_k$ yang didefinisikan dengan:
+
+\begin{equation} \label{eq16}
+\bar{p}_k = \dfrac{1}{|\omega|}\sum_{i\in{\omega_k}}
+\end{equation}
+
+Namun, sebuah piksel i pasti akan terlibat pada komputasi \textit{window-window} yang mengandung i dan saling tumpang tindih pada gambar sehingga nilai $q_i$ yang kita dapatkan dari persamaan (12) bisa berbeda-beda. Untuk mengatasinya, setelah kita berhasil menghitung nilai $a_k$ dan $b_k$ untuk semua window $\sigma_k$ pada gambar, kita menghitung rata-rata dari semua kemungkinan nilai $q_i$ dengan:
+
+\begin{equation} \label{eq17}
+q_i=\dfrac{1}{|\omega|}\sum_{k|i\in{\omega_k}}{a_kI_i+b_k}
+\end{equation}
+
+Karena $\sum_{k|i\in{\omega_k}}a_k=\sum_{i\in{\omega_k}}$ dan \textit{window} berbentuk persegi yang simetris, maka persamaan di atas dapat kita ubah ke dalam bentuk:
+
+\begin{equation} \label{eq18}
+q_i=\bar{a}_iI_i+\bar{b}_i
+\end{equation}
+
+perhatikan bahwa  $\bar{a}_i$ dan $\bar{b}_i$ adalah hasil dari \textit{mean filtering} $a_k$ dan $b_k$. Kita dapat memperhalus hasil estimasi transmisi yang sebelumnya didapat dengan persamaan (14), (15), dan (18).
+
+Setelah kita berhasil mengetahui transmisi t(x) yang sudah diperhalus, kita akan mencoba mengestimasi \textit{radiance} J. Ketika t(x) mendekati 0, maka nilai \textit{Direct attenuation} J(x)t(x) juga akan mendekati 0. Maka dari itu, kita memperkenalkan batas bawah $t_0$ untuk t(x) agar nilai t(x) tidak terlalu rendah. Batas bawah $t_0$ biasanya bernilai 0.1 Dengan menggunakan persamaan (1), kita bisa mendapatkan \textit{radiance} J dengan persamaan:
+
+\begin{equation} \label{eq19}
+\mathbf{J}(x)=\dfrac{\mathbf{I}(x)-\mathbf{A}}{\max{(t(x),t_0)}}+\mathbf{A}
+\end{equation}
+
+Terakhir, kita akan mengestimasi cahaya atmosferik A. Langkah terakhir ini relatif lebih mudah ketimbang langkah-langkah sebelumnya. Pertama, kita mengambil 0.1\% piksel dengan intensitas tertinggi pada \textit{dark channel}. Dari piksel-piksel ini, kita ambil piksel dengan intensitas tertinggi pada citra masukan asli sebagai A.
+
+Berikut adalah contoh proses DCP:
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{assets/Figure3.png}
+\caption{Contoh proses DCP}
+\end{figure}
+
+\newpage
+
+Metode ini tentu saja bukan metode yang sempurna sehingga mempunyai keterbatasan. Kelemahan terbesar dari metode ini adalah ketika objek pada citra bebas \textit{haze} mempunyai warna yang mirip atau sama dengan cahaya atmosfer dan tidak ada bayangan dari objek tersebut, metode ini akan mengestimasi transmisi objek tersebut terlalu rendah.
+
+
+\subsection{Metode \textit{Deep Learning}: \textit{Modified} PDR-Net}
+
+\textit{Deep learning} yang kerap dielu-elukan akhir-akhir ini membuka beragam potensi yang mampu  mengatasi kekurangan metode-metode konvensional pengolahan citra. Berkaitan dengan ini, \textit{convolutional neural network}, atau lebih sering disebut dengan CNN, umum digunakan dalam jejaring pembelajaran mesin. CNN mampu mempelajari kemunculan-kemunculan pola dan fitur pada dataset gambar yang diberikan. Belakangan ini, muncul banyak implementasi CNN untuk melakukan \textit{dehazing} atau penghilangan kabut pada citra, mengingat kabut adalah gangguan atmosferik yang umum hadir saat akuisisi citra.
+
+\textit{Modified} PDR-Net (akan kami sebut dengan MPDR-Net) merupakan tajuk yang diusung oleh Hartanto dan Rahadianti (2021) untuk \textit{neural network} mereka yang merupakan hasil modifikasi dari PDR-Net. PDR-Net sendiri adalah \textit{neural network} yang dikembangkan oleh Li et al. (2020) dan merupakan kependekan dari \textit{Perception-Inspired Single Image Dehazing Network with Refinement}. Fokus utama PDR-Net adalah menghasilkan citra bebas kabut yang lebih enak dilihat mata daripada metode-metode terdahulu dengan mengusung metode-metode perbaikan citra dan \textit{perceptive loss}. Baik MPDR-Net maupun PDR-Net bekerja dengan dua \textit{subnetwork}: \textit{Haze-removal subnetwork} dan \textit{refinement subnetwork}. Seperti namanya, \textit{haze-removal subnetwork} akan menghasilkan prediksi citra tanpa kabut atau \textit{haze} dan \textit{refinement subnetwork} akan meningkatkan kualitas dari citra prediksi tersebut. Arsitektur inilah yang kemudian diadopsi oleh Hartanto dan Rahadianti dalam MPDR-Net.
+
+Selain PDR-Net, FFA-Net usulan Qin (2019) juga ikut menginspirasi pembuatan MPDR-Net. FFA-Net, kependekan dari \textit{Fusion Feature Attention Network} memanfaatkan sebuah komponen baru yakni mekanisme \textit{Feature Attention} yang akan kita sebut FA. FA mengombinasikan mekanisme \textit{Channel Attention} dan \textit{Pixel Attention} yang mampu memberikan atensi berupa bobot yang berbeda untuk fitur-fitur berbeda kanal maupun piksel secara berurutan. Gambar berkabut cenderung memiliki distribusi kabut yang tak merata pada setiap piksel sehingga informasi yang bisa diambil dari tiap kanal maupun piksel tidak setara. FA mampu memperlakukan piksel yang berbeda secara berbeda sehingga bisa menerima informasi-informasi yang berbeda. Dengan ini, informasi yang dianggap penting bisa dipertahankan di lapisan-lapisan \textit{network} yang lebih dalam.
+
+Metode MPDR-Net yang diusulkan Hartanto dan Rahadianti memiliki beberapa modifikasi. Modifikasi-modifikasi tersebut di antaranya: Penggunaan \textit{dilated convolution}, penggunaan \textit{pyramid dilated convolution}, dan penambahan mekanisme atensi untuk kanal dan piksel. Perbandingan arsitektur antara MPDR-Net, PDR-Net, dan FFA-Net dilampirkan sebagaimana gambar-gambar di bawah disusul dengan uraian studi tentang bagaimana MPDR-Net bekerja. Perhatikan bahwa pada MPDR-Net, modul konvolusi utama memiliki notasi di atasnya yang merepresentasikan “ukuran kernel $\times$
+banyak feature map keluaran $\times$ kecepatan dilasi pada \textit{dilated convolution}”
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{assets/MPDR-Net.png}
+\caption{Arsitektur \textit{Modified} PDR-Net}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{assets/PDR-Net.png}
+\caption{Arsitektur PDR-Net}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{assets/FFA-Net.png}
+\caption{Arsitektur FFA-Net}
+\end{figure}
+
+\newpage
+
+\begin{enumerate}
+    \item \textit{Dilated Convolution}\\
+    Penggunaan \textit{dilated convolution} memperbesar \textit{receptive field} secara multiplikatif dengan \textit{cost} komputasi efisien. Ide utama \textit{dilated convolution} adalah menyelipkan nilai kosong di antara piksel-piksel filter yang dipakai untuk konvolusi. Panjang jeda nilai kosong diatur oleh parameter yang disebut \textit{dilation rate} atau kecepatan dilasi yang akan kita sebut $d$. Jeda yang dibuat di antara piksel filter akan senilai dengan $d - 1$. \textit{Receptive field} suatu filter berperan cukup penting karena merepresentasikan seberapa besar informasi spasial yang dipakai dalam konvolusi.
+    
+    \item \textit{Pyramid Dilated Convolution}\\
+    Penggunaan arsitektur ini dicirikan dengan adanya rentetan \textit{dilated convolution} dengan nilai \textit{dilation rate} yang meningkat secara bertahap. Hal ini dilakukan untuk mengatasi kehilangan terlalu banyak informasi spasial saat proses pemelajaran berlangsung yang mungkin terjadi ketika perbedaan \textit{receptive field} terlalu jauh. Modul konvolusi dengan arsitektur piramidal seperti ini dipakai juga oleh Gridach dan Voiiculescu (2020). Serupa dengan Gridach dan Voiiculescu, Hartanto dan Rahadianti menggunakan operasi penjumlahan ketimbang konkatenasi pada akhir konvolusi. Operasi penjumlahan dinilai memiliki performa lebih baik dan mampu menangkap informasi dengan lebih baik pula.
+    
+    \item \textit{Haze Removal and Refinement Processing Module}\\
+    Modul konvolusi utama yang diusung dalam \textit{network} (warna hijau dengan nama \textit{Processing Module}) mengimplementasikan apa yang disebut dengan \textit{skip connection}. \textit{Skip connection} diaplikasikan dalam \textit{Residual Neural Network} atau ResNet dan bekerja untuk mempertahankan informasi ke lapisan \textit{network} yang lebih dalam dengan "melongkapi" lapisan-lapisan konvolusi. Dengan adanya hal ini, informasi mengenai piksel-piksel dengan \textit{haze} yang cenderung tipis mampu dipertahankan. Arsitektur modul ini dapat dilihat pada gambar di bawah.
+    
+    \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{assets/haze_processing_module.png}
+    \caption{Arsitektur \textit{Processing Module}}
+    \end{figure}
+    
+    Dalam modul ini, ada lapisan konvolusi yang menggunakan \textit{activation function} ReLU dan ada pula yang tidak. Lapisan konvolusi dengan ReLU memiliki fungsi meningkatkan mutu \textit{feature map} yang dihasilkan oleh lapisan konvolusi itu sendiri sebelum kemudian diproses oleh mekanisme atensi. Lapisan konvolusi yang tidak menggunakan ReLU berfungsi untuk \textit{latent reconstruction} yang dapat dilakukan dengan melakukan penjumlahan pada hasil rentetan konvolusi sebelumnya dengan hasil \textit{skip connection}.
+    
+    \item \textit{Pre and Post-Processing Module}\\
+    Modul-modul ini (ditandai dengan nama sama pada gambar) diimplementasikan dengan RDB atau \textit{Residual Dense Block} dan diadopsi dari GridDehaze-Net. Modul ini akan menghasilkan 64 \textit{feature map} dan bertujuan untuk meningkatkan relevansi hasil dan efisiensi dari tahap \textit{pre-processing} maupun \textit{post-processing}. Modul \textit{pre-processing} diimplementasikan dengan sebuah lapisan konvolusi tanpa ReLU dan diikuti RDB berisikan lapisan-lapisan konvolusi dengan ReLU. Sebaliknya, modul \textit{post-processing} diimplementasikan dengan RDB yang sama dan diikuti oleh sebuah lapisan konvolusi tanpa ReLU. Arsitektur umum modul \textit{pre-processing} dapat dilihat sebagaimana berikut.
+    
+    \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{assets/preprocessing_module.png}
+    \caption{Arsitektur \textit{Pre-Processing Module}}
+    \end{figure}
+    
+    \item Mekanisme Atensi:\textit{Channel Attention Module}\\
+    Kedua modul mekanisme atensi, sebagaimana dijelaskan pada beberapa paragraf sebelumnya, diadopsi dari FFA-Net. Akan dibahas mekanisme atensi untuk kanal terlebih dahulu.
+    
+    Modul ini (ditandai dengan modul merah) akan memberikan bobot tersendiri untuk masing-masing kanal sehingga memberikan informasi yang lebih mendalam tentang hubungan kanal warna dan gambar berkabut. Pada awalnya, informasi diproses dengan menggunakan \textit{Global Average Pooling}. \textit{Global Average Pooling} beroperasi dengan mengkalkulasikan rerata keluaran dari \textit{feature map} masukan pada lapisan sebelumnya dan menghasilkan informasi dengan ukuran yang lebih ringkas. \textit{Global Average Pooling} direpresentasikan secara matematis sebagai berikut.
+    
+    \begin{equation} \label{eq20}
+    g_c=H_p(F_c)=\dfrac{1}{H\times{W}}\sum_{i=1}^{H}\sum_{j=1}^{W}X_c(i,j)
+    \end{equation}
+    
+    \textit{Global Average Pooling} $H_p$ akan menghasilkan keluaran berbentuk $C \times 1 \times 1$ dengan $C$ merupakan banyak kanal masukan dari masukan $F_c$. $X_c(i,j)$ menandakan nilai pada kanal $C$ pada koordinat piksel $(i,j)$ Hasil ini kemudian diproses dengan sebuah dua lapisan konvolusi, yang pertama diikuti langsung oleh \textit{activation function} ReLU dan yang kedua oleh fungsi sigmoid untuk menghasilkan bobot-bobot yang berbeda. Informasi yang diperoleh dari modul atensi kanal ini bersifat \textit{channel-wise}, global, dan spasial. Arsitektur modul ini digambarkan oleh diagram berikut.
+    
+    \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{assets/channel_attention_module.png}
+    \caption{Arsitektur \textit{Channel Attention Module}}
+    \end{figure}
+    
+    Perhitungan selanjutnya dapat direpresentasikan sebagai persamaan-persamaan berikut.
+    
+    \begin{equation} \label{eq21}
+    CA_c=\sigma(Conv(\delta(Conv(g_c))))
+    \end{equation}
+    \begin{equation} \label{eq22}
+    output=CA_c \bigotimes F_c
+    \end{equation}
+    
+    Dengan $\sigma$ adalah fungsi sigmoid dan $\delta$ adalah fungsi ReLU. Bobot yang didapat kemudian dikalikan secara \textit{element-wise} dengan masukan awal $F_c$. Hasil akhir akan berbentuk 64 \textit{feature map}.
+    
+    \item Mekanisme Atensi:\textit{Pixel Attention Module}\\
+    Modul ini (ditandai dengan modul kuning) bertujuan untuk menangkap informasi dari piksel dengan kabut tinggi dengan lebih baik. Arsitektur modul ini serupa dengan modul \textit{Channel Attention} hanya saja tidak dilakukan \textit{Global Average Pooling} pada tahap awalnya. Hasil sebelum dilakukan operasi \textit{element-wise} akan berbentuk $1 \times H \times W$ dengan $H$ dan $W$ merupakan dimensi dari gambar masukan dan dapat dituliskan dalam notasi matematis sebagaimana berikut, dengan $I$ sebuah masukan.
+    
+    \begin{equation} \label{eq23}
+    PA=\sigma(Conv(\delta(Conv(I))))
+    \end{equation}
+    
+    Pemrosesan lebih lanjut dari modul ini dapat direpresentasikan sebagai persamaan-persamaan berikut, dengan $PA$ bobot yang didapatkan dan $I$ masukan awal.
+    
+    \begin{equation} \label{eq24}
+    output=F\bigotimes{PA}
+    \end{equation}
+    
+    \item \textit{Loss Function}\\
+    Pada dasarnya, \textit{neural network} belajar dengan meminimalkan galat yang dihasilkan oleh \textit{loss function}. Pemilihan \textit{loss function} yang tepat dapat menghasilkan performa yang optimum. \textit{Loss function} yang dibahas di sini adalah L1 yang dapat direpresentasikan sebagaimana berikut.
+    
+    \begin{equation} \label{eq25}
+    L_1=\dfrac{1}{N}\sum_{x=1}^{N}\sum_{i=1}^{3}F_s(I_i(x)-G_i(x))
+    \end{equation}
+    
+    dengan
+    
+    \begin{equation} \label{eq26}
+        F_s(e)= 
+        \begin{cases}
+            0.5e^2,& \text{if } |e|<1\\
+            |e|-0.5,& \text{otherwise}
+        \end{cases}
+    \end{equation}
+    
+    $N$ merepresentasikan keseluruhan piksel gambar. $I_i(x)$ merepresentasikan nilai intensitas pada piksel $x$ dari gambar hasil prediksi dan $G_i(x)$ dari gambar \textit{ground truth}. Selain menggunakan L1, MPDR-Net juga menggunakan \textit{perceptual loss}. Berdasarkan rujukan utama MPDR-Net, \textit{perceptual loss} bertujuan untuk meminimalkan perbedaan antara gambar hasil prediksi dan \textit{ground truth} secara persepsi, memperkuat $feature$ halus, dan mempertahankan informasi akan warna. Untuk menghitung $perceptual loss$, MPDR-Net menggunakan bantuan model VGG16 dengan mengekstraksi tiga lapisan aktivasinya dari model tersebut. \textit{Perceptual loss} dapat dituliskan sebagaimana berikut.
+    
+    \begin{equation} \label{eq27}
+    L_p=\sum_{j=1}^{3}\dfrac{1}{C_jH_jW_j}||\phi_j(I)-\phi_j(G)||
+    \end{equation}
+    
+    $C_jH_jW_j$ menandakan $feature map$ dari gambar hasil prediksi dan \textit{ground truth} dan $\phi_j$ merepresentasikan $feature$ persepsi VGG16. Kedua \textit{loss function} kemudian dikombinasikan sebagaimana berikut.
+    
+    \begin{equation} \label{eq28}
+    L_{total}=L_1+\lambda{L_p}
+    \end{equation}
+    
+    Parameter $\lambda$ digunakan untuk mengatur bobot antara $perceptual loss$ dan L1. Pada MPDR-Net, dipilih $\lambda = 0.04$
+    
+\end{enumerate}
+
+
+
+\section{Desain Eksperimen}
+
+Tahapan dari penelitian kami adalah sebagai berikut:
+\begin{enumerate}
+  \item Mempersiapkan implementasi DCP dan MPDR-Net
+  \item Mempersiapkan \textit{test cases}
+  \item Memasukkan \textit{test cases} ke dalam algoritma DCP dan MPDR-Net
+  \item Mencatat waktu kedua metode pada setiap \textit{test case}
+  \item Mencatat skor SSIM untuk setiap hasil dari komputasi pada \textit{test case}
+  \item Melakukan analisis pada hasil percobaan
+\end{enumerate}
+
+Untuk implementasi DCP, kami menggunakan implementasi yang sudah dibuat oleh He Zhang (2021). Sedangkan untuk MPDR-Net, kami mendapatkan implementasi metode tersebut dari Hartanto dan Rahadianti (2021). Tautan \textit{repository} dari kedua implementasi tersebut bisa dilihat pada bagian referensi di akhir laporan ini.
+
+Kami akan menggunakan \textit{test case} berupa 45 pasang citra yang merupakan pasangan gambar dengan haze beserta gambar yang sama tanpa haze. Citra-citra tersebut kami dapatkan dari dataset O-haze yang tersedia untuk umum. Selain menggunakan citra dari O-haze, kami juga mengambil tiga citra berkabut yang diambil pada situasi nyata sebagai masukan tambahan bagi kedua metode tersebut. Setiap \textit{test case} tersebut akan kami jadikan masukan bagi algoritma DCP. Untuk MPDR-Net, kami memilih secara acak citra-citra pada O-haze untuk dijadikan \textit{training set} \textit{validation set},  dan \textit{testing set} dengan persentase masing-masing 64\% (29 citra), 16\% (7 citra) dan 20\% (9 citra).
+
+Setiap percobaan tersebut akan dicatat waktunya dengan memanfaatkan modul Time pada bahasa pemrograman Python. Hasil dari percobaan pada kedua metode tersebut akan kami analisis dan bandingkan satu sama lain. Terakhir, kami akan menarik kesimpulan berdasarkan analisis dan perbandingan yang telah dilakukan sebelumnya.
+
+Untuk metode pengukuran kualitas hasil, kami memilih menggunakan \textit{structural similarity index measure} (SSIM). Menurut kami, SSIM sangat baik digunakan pada percobaan ini karena SSIM dapat mengukur kesamaan dari dua citra sampai pada detail kesamaan struktur, pencahayaan, dan kontras. Karena hal tersebut SSIM lebih dapat menyimulasikan persepsi manusia terhadap dua gambar ketimbang metode lain seperti \textit{mean squared error} (MSE) dan \textit{peak signal-to-noise ratio} (PSNR). Keunggulan SSIM ketimbang metode lain juga didukung oleh penelitian Wang et al. (2004) yang merupakan pencipta dari metode SSIM.
+
+
+\newpage
+\section{Hasil Eksperimen}
+
+Tabel di bawah menunjukkan hasil perbandingan penggunaan DCP dengan MPDR-Net. Dapat dilihat pada set 4, 14, 41, dan 45 citra yang dihasilkan MPDR-Net memiliki warna yang lebih gelap dibandingkan \textit{ground truth} citranya, seolah-olah warna biru pada citra tersebut hilang. Sedangkan pada set 8 dan 20 masih terdapat sedikit kabut pada citra, tetapi objek masih terlihat cukup jelas. Pada set 21, 22, dan 23, citra yang dihasilkan sudah cukup mirip dengan \textit{ground truth} citra tersebut. Secara keseluruhan, citra yang dihasilkan MPDR-Net sudah menyerupai citra \textit{ground truth} meskipun belum sempurna.
+
+Sedangkan hampir seluruh citra yang dihasilkan DCP membuat kabut menjadi agak kebiruan. Terdapat suatu keanehan pada set 14 di mana langit pada citra berubah menjadi warna hijau. Hal tersebut menyebabkan citra yang dihasilkan DCP masih belum menyerupai citra \textit{ground truth}.
+
+\begin{table}[h]
+\setlength{\tabcolsep}{2pt}
+\renewcommand{\arraystretch}{1.1}
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
+\begin{tabular}[width=1.1\linewidth]{M{3.5em} M{3.65em} M{3.65em} M{3.65em} M{3.65em} M{3.65em} M{3.65em} M{3.65em} M{3.65em} M{3.65em}}
+\hline
+ & Set 4 & Set 8 & Set 14 & Set 20 & Set 21 & Set 22 & Set 23 & Set 41 & Set 45 \\
+\hline
+Hazy & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/hazy/04_outdoor_hazy.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/hazy/08_outdoor_hazy.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/hazy/14_outdoor_hazy.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/hazy/20_outdoor_hazy.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/hazy/21_outdoor_hazy.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/hazy/22_outdoor_hazy.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/hazy/23_outdoor_hazy.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/hazy/41_outdoor_hazy.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/hazy/45_outdoor_hazy.jpg} \\
+DCP & \includegraphics[width=\linewidth,height=3em]{assets/test_result/04_outdoor_hazy_DCP.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/08_outdoor_hazy_DCP.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/14_outdoor_hazy_DCP.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/20_outdoor_hazy_DCP.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/21_outdoor_hazy_DCP.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/22_outdoor_hazy_DCP.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/23_outdoor_hazy_DCP.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/41_outdoor_hazy_DCP.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/45_outdoor_hazy_DCP.jpg} \\
+MPDR-Net & \includegraphics[width=\linewidth,height=3em]{assets/test_result/04_outdoor_hazy_FFA.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/08_outdoor_hazy_FFA.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/14_outdoor_hazy_FFA.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/20_outdoor_hazy_FFA.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/21_outdoor_hazy_FFA.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/22_outdoor_hazy_FFA.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/23_outdoor_hazy_FFA.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/41_outdoor_hazy_FFA.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_result/45_outdoor_hazy_FFA.jpg} \\
+GT & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/GT/04_outdoor_GT.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/GT/08_outdoor_GT.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/GT/14_outdoor_GT.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/GT/20_outdoor_GT.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/GT/21_outdoor_GT.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/GT/22_outdoor_GT.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/GT/23_outdoor_GT.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/GT/41_outdoor_GT.jpg} & \includegraphics[width=\linewidth,height=3em]{assets/test_images_with_gt/GT/45_outdoor_GT.jpg} \\
+\hline
+\end{tabular}
+\caption{\label{tab:table-name}Perbandingan Restorasi Citra antara DCP dan MPDR-Net pada Dataset Test.}
+\end{table}
+
+Kami juga melakukan percobaan terhadap kedua metode dengan memasukkan gambar dari Google. Kami belum sempat melakukan Psycho-Visual Testing, namun dapat dilihat bahwa citra yang dihasilkan MPDR-Net secara umum lebih baik dibandingkan dengan DCP karena citra yang dihasilkan tidak memiliki piksel-piksel rusak. 
+
+\begin{table}[H]
+\setlength{\tabcolsep}{2pt}
+\renewcommand{\arraystretch}{1.1}
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
+\begin{tabular}[width=1.1\linewidth]{M{3.5em} M{11em} M{11em} M{11em}}
+\hline
+ & Set 1 & Set 2 & Set 3 \\
+\hline
+Hazy & \includegraphics[width=\linewidth]{assets/test_images/images.jpg} & \includegraphics[width=\linewidth]{assets/test_images/screenshot.jpg} & \includegraphics[width=\linewidth]{assets/test_images/dehaze.jpg} \\
+DCP & \includegraphics[width=\linewidth]{assets/test_result/images_DCP.jpg} & \includegraphics[width=\linewidth]{assets/test_result/screenshot_DCP.jpg} & \includegraphics[width=\linewidth]{assets/test_result/dehaze_DCP.jpg} \\
+MPDR-Net & \includegraphics[width=\linewidth]{assets/test_result/images_FFA.jpg} & \includegraphics[width=\linewidth]{assets/test_result/screenshot_FFA.jpg} & \includegraphics[width=\linewidth]{assets/test_result/dehaze_FFA.jpg} \\
+\end{tabular}
+\caption{\label{tab:table-name}Perbandingan Restorasi Citra antara DCP dan MPDR-Net pada Citra Kondisi Nyata.}
+\end{table}
+
+Berikut adalah tabel yang menunjukkan SSIM dan \textit{runtime} dari setiap set yang dijalankan DCP dan MPDR-Net.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ccccc}
+    \hline
+        \multirow{2}{*}{Set} & \multicolumn{2}{c}{DCP} & \multicolumn{2}{c}{MPDR-Net} \\\cline{2-5}
+          & SSIM & Runtime (s) & SSIM & Runtime (s) \\\cline{1-5}
+        4 & 0.14 & 2.40 & 0.66 & 1.57 \\
+        8 & 0.25 & 2.21 & 0.81 & 1.52 \\
+        14 & 0.29  & 4.06 & 0.86 & 1.67 \\
+        20 & 0.29 & 3.40 & 0.82 & 1.53 \\
+        21 & 0.16 & 4.86 & 0.88 & 1.78 \\
+        22 & 0.34 & 4.91 & 0.95 & 1.74 \\
+        23 & 0.59 & 2.66 & 0.93 & 1.36 \\
+        41 & 0.33 & 1.69 & 0.94 & 1.17 \\
+        45 & 0.21 & 2.31 & 0.83 & 1.27 \\
+        \cline{1-5}
+        Rata-rata & 0.29 & 3.17 & 0.85 & 1.51 \\
+    \end{tabular}
+    \caption{\label{tab:my_label}Perbandingan SSIM dan \textit{runtime} DCP dan MPDR-Net pada \textit{testing set} MPDR-Net}
+\end{table}
+
+Dapat dilihat dari tabel di atas bahwa berdasarkan pengukuran skor SSIM, MPDR-Net secara konsisten jauh mengungguli DCP dalam melakukan \textit{single image dehazing}. Selain itu, rata-rata kecepatan runtime MPDR-Net dalam melakukan restorasi citra juga lebih cepat dari kecepatan runtime DCP. \newline
+
+Namun, untuk melakukan pelatihan terhadap model MPDR-Net membutuhkan waktu yang cukup lama. Pelatihan model MPRD-Net dengan 36 citra \textit{training set} dari O-haze yang kami lakukan pada eksperimen ini membutuhkan waktu sekitar 234 menit. Hal ini dikarenakan pelatihan model MPDR-Net yang menggunakan \textit{deep learning} lebih kompleks dan memakan sumber daya yang jauh lebih besar untuk melatih modelnya. Sedangkan, metode DCP tidak memerlukan pelatihan model sehingga kecepatan \textit{runtime} dari DCP jauh lebih cepat ketimbang kecepatan \textit{runtime} MPDR-Net pada tahap pelatihan model. \newline
+
+\chapter{Penutup}
+
+\section{Kesimpulan}
+Kesimpulan kami adalah bila kita memiliki sumber daya yang besar, waktu, dan data yang cukup untuk melakukan pelatihan model, maka MPDR-Net sangat cocok digunakan untuk melakukan \textit{single image dehazing} karena akurasinya yang relatif sangat tinggi. Namun, bila kita tidak mempunyai sumber daya dan daya yang cukup, maka kita dapat menggunakan DCP untuk mengambil aproksimasi citra bebas \textit{haze} dari sebuah citra yang memiliki \textit{haze}.
+
+\section{Saran}
+Penelitian ini diharapkan dapat memberikan wawasan akan beberapa metode \textit{image dehazing} yang mencakup teknik konvensional maupun \textit{deep learning}. Kemudian diharapkan dapat dikembangkan sebuah metode \textit{image dehazing} yang memberikan hasil yang lebih akurat di kemudian hari dari penelitian ini.
+
+\section {Refleksi Kelompok}
+Selama melakukan penelitian, terdapat beberapa kendala yang sempat menghalangi kelancaran proses penelitian. Kendala utama adalah keterbatasan sumber daya teknologi untuk menjalankan program implementasi MPDR-Net mengingat komputasinya membutuhkan spesifikasi mesin yang cukup tinggi agar dapat berjalan dengan waktu singkat.
+
+Kendala lainnya yang cukup memberatkan adalah waktu pengerjaan penelitian ini karena berjalan bersamaan dengan beragam tugas kelompok dan tugas akhir dari mata kuliah lain. Karena hal ini, peneliti menyadari bahwa seharusnya peneliti bisa lebih baik dalam mengatur waktu dengan memulai penelitian lebih awal sehingga beban penelitian tersebar lebih merata dalam jangka waktu pengerjaan.
+
+\newpage
+\nocite{*}
+\bibliographystyle{apalike}
+\bibliography{bibliography.bib}
+\pagenumbering{gobble}
+
+\end{document}
